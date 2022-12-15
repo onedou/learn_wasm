@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div>hello wasm!!!</div>
+    <script src="./index.js"></script>
+</body>
+
+(module
+  (import "console" "log" (func $log))
+  (import "console" "error" (func $error))
+  (func (export "add") (param i32 i32) (result i32)
+    local.get 0
+    local.get 1
+    call $log
+    call $error
+    i32.add))
+
+
+</html>
