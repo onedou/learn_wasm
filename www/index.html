@@ -8,18 +8,7 @@
 </head>
 <body>
     <div>hello wasm!!!</div>
-    <script src="./index.js"></script>
+    <script src="./bootstrap.js"></script>
 </body>
-
-(module
-  (import "console" "log" (func $log))
-  (import "console" "error" (func $error))
-  (func (export "add") (param i32 i32) (result i32)
-    local.get 0
-    local.get 1
-    call $log
-    call $error
-    i32.add))
-
 
 </html>
