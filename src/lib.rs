@@ -5,6 +5,11 @@ use wee_alloc::WeeAlloc;
 #[global_allocator]
 static ALLOC: WeeAlloc = WeeAlloc::INIT;
 
+#[wasm_bindgen(module = "/www/utils/random.js")]
+extern "C" {
+    fn random(max: usize) -> usize;
+}
+
 #[wasm_bindgen]
 #[derive(PartialEq)]
 pub enum Direction {
@@ -14,7 +19,7 @@ pub enum Direction {
     Right,
 }
 
-struct SnakeCell(usize);
+pub struct SnakeCell(usize);
 
 struct Snake {
     body: Vec<SnakeCell>,
@@ -22,9 +27,15 @@ struct Snake {
 }
 
 impl Snake {
-    fn new(spawn_index: usize) -> Self {
+    fn new(spawn_index: usize, size: usize) -> Self {
+        let mut body = Vec::new();
+
+        for i in 0..size {
+            body.push(SnakeCell(spawn_index - i))
+        }
+
         Self {
-            body: vec![SnakeCell(spawn_index)],
+            body,
             direction: Direction::Down,
         }
     }
@@ -34,17 +45,31 @@ impl Snake {
 pub struct World {
     width: usize,
     size: usize,
+    reward_cell: usize,
     snake: Snake,
 }
 
 #[wasm_bindgen]
 impl World {
     pub fn new(width: usize, snake_index: usize) -> Self {
+        let size: usize = width * width;
+        let snake = Snake::new(snake_index, 3);
+
         Self {
             width,
             size: width * width,
-            snake: Snake::new(snake_index),
+            reward_cell: World::gen_reward_cell(size),
+            snake,
         }
+    }
+
+    // TODO: 蛋不能在蛇身上
+    fn gen_reward_cell(max: usize) -> usize {
+        random(max)
+    }
+
+    pub fn reward_cell(&self) -> usize {
+        self.reward_cell
     }
 
     pub fn width(&self) -> usize {
@@ -56,7 +81,15 @@ impl World {
     }
 
     pub fn change_snake_direction(&mut self, direction: Direction) {
-        self.snake.direction = direction
+        self.snake.direction = direction;
+    }
+
+    pub fn snake_cells(&self) -> *const SnakeCell {
+        self.snake.body.as_ptr()
+    }
+
+    pub fn snake_length(&self) -> usize {
+        self.snake.body.len()
     }
 
     pub fn update(&mut self) {
@@ -75,7 +108,7 @@ impl World {
     }
 
     fn set_snake_head(&mut self, index: usize) {
-        self.snake.body[0].0 = index
+        self.snake.body[0].0 = index;
     }
 
     fn index_to_cell(&self, index: usize) -> (usize, usize) {

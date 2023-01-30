@@ -1,9 +1,10 @@
 import init, { Direction, World } from "wasm_game";
+import { random } from "./utils/random";
 
-init().then(() => {
+init().then(wasm => {
     const CELL_SIZE = 20;
     const WORLD_WIDTH = 8;
-    const snakeIndex = Date.now() % (WORLD_WIDTH * WORLD_WIDTH);
+    const snakeIndex = random(WORLD_WIDTH * WORLD_WIDTH);
     const world = World.new(WORLD_WIDTH, snakeIndex);
     const worldWidth = world.width();
     const fps = 5;
@@ -48,11 +49,35 @@ init().then(() => {
     }
 
     function drawSnake() {
-        const snake_index = world.snake_head_index();
-        const row = Math.floor(snake_index / worldWidth);
-        const col = snake_index % worldWidth;
+        const snakeCells = new Uint32Array(
+            wasm.memory.buffer,
+            world.snake_cells(),
+            world.snake_length()
+        )
 
+        snakeCells.forEach((cellIndex, i) => {
+            const col = cellIndex % worldWidth;
+            const row = Math.floor(cellIndex / worldWidth);
+
+            context.beginPath();
+            context.fillStyle = i === 0 ? '#787878' : '#000000';
+            context.fillRect(
+                col * CELL_SIZE,
+                row * CELL_SIZE,
+                CELL_SIZE,
+                CELL_SIZE
+            );
+        });
+
+        context.stroke();
+    }
+
+    function drawReward() {
+        const index = world.reward_cell();
+        const row = Math.floor(index / worldWidth);
+        const col = index % worldWidth;
         context.beginPath();
+        context.fillStyle = '#FF0000';
         context.fillRect(
             col * CELL_SIZE,
             row * CELL_SIZE,
@@ -65,6 +90,7 @@ init().then(() => {
     function draw() {
         drawWorld();
         drawSnake();
+        drawReward();
     }
 
     function run() {
